@@ -75,7 +75,7 @@ contract YieldFarm is Ownable {
             earnedYield += yieldBalances[msg.sender];
         }
         startTime[msg.sender] = block.timestamp;
-        yieldToken.transfer(msg.sender, earnedYield);
+        yieldToken.mint(msg.sender, earnedYield);
         emit YieldClaimed(msg.sender, earnedYield);
     }
 

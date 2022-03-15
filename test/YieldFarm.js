@@ -1,22 +1,19 @@
 const { expect } = require("chai");
-// Import the helpers
-const { time } = require("@openzeppelin/test-helpers");
 
 describe("YieldFarm", function () {
   let mockDai;
-  let yieldToken;
   let YieldFarm;
   let addr1;
 
   beforeEach(async function () {
     MockDai = await ethers.getContractFactory("MockDai");
-    YieldToken = await ethers.getContractFactory("YieldToken");
     YieldFarm = await ethers.getContractFactory("YieldFarm");
+    YieldToken = await ethers.getContractFactory("YieldToken");
     [tokenOwner, addr1] = await ethers.getSigners();
 
     mockDai = await MockDai.deploy(1000000000000);
-    yieldToken = await YieldToken.deploy(1000000000000);
-    yieldFarm = await YieldFarm.deploy(mockDai.address, mockDai.address);
+    yieldToken = await YieldToken.deploy();
+    yieldFarm = await YieldFarm.deploy(mockDai.address, yieldToken.address);
   });
 
   describe("Depositing Liquidity", function () {
@@ -105,6 +102,10 @@ describe("YieldFarm", function () {
   });
 
   describe("Claiming Yield", function () {
+    beforeEach(async () => {
+      await yieldToken.transferOwnership(yieldFarm.address);
+    });
+
     it("Tries to claim 0 yield, reverts with message", async () => {
       await expect(yieldFarm.connect(addr1).claimYield()).to.be.revertedWith(
         "You cannot claim more yield than you have earned"
@@ -117,14 +118,14 @@ describe("YieldFarm", function () {
       );
     });
 
-    it("Should successfully removes liquidity", async () => {
+    it("Should successfully remove liquidity", async () => {
       await mockDai.connect(tokenOwner).transfer(addr1.address, 10000000000);
       await mockDai.connect(addr1).approve(yieldFarm.address, 10);
       await yieldFarm.connect(addr1).depositLiquidity(10);
       // Advance time 365 days so that depositors can get rewards
       await ethers.provider.send("evm_increaseTime", [365 * 24 * 60 * 60]); // 365 days
       expect(await yieldFarm.connect(addr1).claimYield())
-        .to.emit(yieldFarm, "YieldClaime")
+        .to.emit(yieldFarm, "YieldClaimed")
         .withArgs(addr1.address, 10);
     });
   });

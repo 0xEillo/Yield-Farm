@@ -1,8 +1,11 @@
 pragma solidity 0.8.12;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract YieldToken is ERC20 {
-    constructor(uint256 initialSupply) ERC20("YieldToken", "YT") {
-        _mint(msg.sender, initialSupply);
+contract YieldToken is ERC20, Ownable {
+    constructor() ERC20("YieldToken", "YT") {}
+
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
     }
 }
